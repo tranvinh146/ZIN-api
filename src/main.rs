@@ -1,6 +1,7 @@
 use std::sync::Mutex;
 
-use actix_web::{post, web, App, HttpServer, Responder, Result};
+use actix_cors::Cors;
+use actix_web::{http, post, web, App, HttpServer, Responder, Result};
 
 use ark_bls12_381::Bls12_381;
 use ark_crypto_primitives::crh::pedersen::Parameters;
@@ -228,9 +229,15 @@ async fn main() -> std::io::Result<()> {
     });
 
     HttpServer::new(move || {
+        let cors = Cors::default()
+            .allowed_origin("http://localhost:8000")
+            .allowed_methods(vec!["GET", "POST"])
+            .allowed_headers(vec![http::header::AUTHORIZATION, http::header::ACCEPT])
+            .allowed_header(http::header::CONTENT_TYPE);
         let merkle_tree_state = merkle_tree_state.clone();
 
         App::new()
+            .wrap(cors)
             .app_data(merkle_tree_state)
             .service(generate_commitment)
             .service(generate_proof)
